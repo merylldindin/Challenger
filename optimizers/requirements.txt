@@ -1,0 +1,8 @@
+joblib==0.13.0
+numpy==1.16.4
+catboost==0.12.2
+lightgbm==2.2.3
+xgboost==0.81
+scipy==1.1.0
+hyperopt==0.1.1
+scikit_learn==0.21.3
