@@ -256,10 +256,7 @@ class Prototype:
 
     def bestModel(self, filename=None, random_seed=None):
 
-        if not os.path.exists('models'): os.mkdir('models')
-
         model = self.fitModel(self.bestParameters(), random_seed)
-
-        if not filename is None: joblib.dump(model, '/'.join(['models', filename]))
+        if not filename is None: joblib.dump(filename)
 
         return model
