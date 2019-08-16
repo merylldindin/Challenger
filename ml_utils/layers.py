@@ -2,9 +2,22 @@
 # Date:    15/03/2019
 # Project: ml_utils
 
+class DecreaseDropout(Callback):
+
+    def __init__(self, prb, steps):
+
+        super(Callback, self).__init__()
+
+        self.ini = prb
+        self.prb = prb
+        self.steps = steps
+
+    def on_epoch_end(self, epoch, logs=None):
+
+        self.prb = max(0, 1 - epoch/self.steps) * self.ini
+
 class AdaptiveDropout(Layer):
 
-    # Initialization
     def __init__(self, p, callback, **kwargs):
 
         self.p = p
@@ -14,7 +27,6 @@ class AdaptiveDropout(Layer):
 
         super(AdaptiveDropout, self).__init__(**kwargs)
 
-    # Defines the core operation of the layer
     def call(self, x, mask=None):
 
         self.p = self.callback.prb
@@ -24,7 +36,6 @@ class AdaptiveDropout(Layer):
 
         return x
 
-    # Returns config for serialization
     def get_config(self):
 
         config = {'p': self.p}
