@@ -25,6 +25,10 @@ exp = Experiment()
 exp.single(prb, random_state=42)
 ```
 
+## Dashboard for fast evaluation
+
+![METRICS](./assets/dashboard.png)
+
 ## Defined models
 
 - **ETS**: Extra Trees
