@@ -39,5 +39,3 @@ def mean_percentage_error(true, pred):
     msk = true != 0.0
     
     return np.nanmean(np.abs(true[msk] - pred[msk]) / true[msk])
-
-

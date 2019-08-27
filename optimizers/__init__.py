@@ -6,3 +6,4 @@ from .problem import Problem, Prototype, Logger
 from .parzen import Parzen
 from .bayesian import Bayesian
 from .evolutive import Evolutive
+from .experiment import Experiment
