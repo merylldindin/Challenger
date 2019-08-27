@@ -11,15 +11,23 @@ class Logger:
 
         self.logger = logging.getLogger()
         self.logger.setLevel(level)
-        fle = logging.FileHandler(filename, 'a')
-        fle.setLevel(logging.INFO)
+        hdl = logging.FileHandler(filename, 'a')
+        hdl.setLevel(logging.INFO)
         fmt = logging.Formatter('%(asctime)s | %(levelname)-7s > %(message)s', datefmt='%I:%M:%S')
-        fle.setFormatter(fmt)
-        self.logger.addHandler(fle)
+        hdl.setFormatter(fmt)
+        self.logger.addHandler(hdl)
 
     def info(self, message):
 
         self.logger.info(message)
+
+    def terminate(self):
+
+        for handler in self.logger.handlers: 
+            handler.close()
+            self.logger.removeHandler(handler)
+            
+        logging.shutdown()
 
 class Problem:
 
