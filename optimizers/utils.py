@@ -17,21 +17,6 @@ def handle_integers(params):
     
     return new_params
 
-# Defines the scoring function
-
-def kappa_score(true, pred):
-
-    cfm = confusion_matrix(true, pred)
-    n_c = len(np.unique(true))
-    s_0 = np.sum(cfm, axis=0)
-    s_1 = np.sum(cfm, axis=1)
-    exp = np.outer(s_0, s_1).astype(np.double) / np.sum(s_0) 
-    mat = np.ones([n_c, n_c], dtype=np.int)
-    mat.flat[::n_c + 1] = 0
-    sco = np.sum(mat * cfm) / np.sum(mat * exp)
-    
-    return 1 - sco
-
 # Defines the mean percentage error as metric
 
 def mean_percentage_error(true, pred):
@@ -39,3 +24,31 @@ def mean_percentage_error(true, pred):
     msk = true != 0.0
     
     return np.nanmean(np.abs(true[msk] - pred[msk]) / true[msk])
+
+# Transform a dataframe to an image
+
+def dtf_to_img(dtf, row_height=0.8, font_size=10, ax=None):
+
+    # Basic needed attributes
+    header_color, row_colors, edge_color = '#40466e', ['#f1f1f2', 'w'], 'w'
+    bbox, header_columns = [0, 0, 1, 1], 0
+
+    if ax is None:
+        size = (18, dtf.shape[0]*row_height)
+        fig, ax = plt.subplots(figsize=(size))
+    
+    ax.axis('off')
+
+    mpl_table = ax.table(cellText=dtf.values, bbox=bbox, colLabels=dtf.columns, cellLoc='center')
+    mpl_table.auto_set_font_size(False)
+    mpl_table.set_fontsize(font_size)
+
+    for k, cell in six.iteritems(mpl_table._cells):
+        cell.set_edgecolor(edge_color)
+        if k[0] == 0 or k[1] < header_columns:
+            cell.set_text_props(weight='bold', color='w')
+            cell.set_facecolor(header_color)
+        else:
+            cell.set_facecolor(row_colors[k[0]%len(row_colors)])
+
+    return ax

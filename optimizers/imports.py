@@ -4,6 +4,7 @@
 
 # General
 import os
+import six
 import time
 import json
 import logging
@@ -47,6 +48,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
+from sklearn.metrics import cohen_kappa_score
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
@@ -66,3 +68,12 @@ from hyperopt import fmin
 from hyperopt import tpe
 from hyperopt import Trials
 from hyperopt import STATUS_OK
+
+# Visualization packages
+try:
+	import seaborn as sns
+	import matplotlib.pyplot as plt
+	from matplotlib import cm
+	from matplotlib.gridspec import GridSpec
+except: 
+	pass

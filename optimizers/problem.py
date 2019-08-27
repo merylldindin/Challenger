@@ -201,7 +201,7 @@ class Prototype:
 
             if self.metric == 'acc': return accuracy_score(true, pred)
             if self.metric == 'f1s': return f1_score(true, pred, average='weighted')
-            if self.metric == 'kap': return kappa_score(true, pred)
+            if self.metric == 'kap': return cohen_kappa_score(true, pred)
             if self.metric == 'mcc': return matthews_corrcoef(true, pred)
             if self.metric == 'lls': return -log_loss(true, pred)
             if self.metric == 'mae': return -mean_absolute_error(true, pred)
@@ -265,6 +265,6 @@ class Prototype:
     def bestModel(self, filename=None, random_seed=None):
 
         model = self.fitModel(self.bestParameters(), random_seed)
-        if not filename is None: joblib.dump(filename)
+        if not filename is None: joblib.dump(model, filename)
 
         return model
