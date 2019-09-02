@@ -4,6 +4,7 @@
 
 # Common imports
 import numpy as np
+import joblib
 
 # Data structures
 from pqdict import PQDict
