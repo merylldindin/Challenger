@@ -1,4 +1,4 @@
-# Challenger
+![LOGO](./assets/challenger-logo.png)
 
 Hackathons, it all began with hackathons. Their intrinsic functioning is simple: design a new product in a limited amount of time and convince a jury that this product is worth being used by people. The difference I make here is generally game-changing, as a good product without a good story will not affect any audience, and similarly, a good story without a good product is a sloppy path very dependent on the technical skills of the jury. Making compromises to get a good version of both (no need for perfection) will generally lead you to a podium. Having done dozens of those, task redundancy struck me, especially when the product is about leveraging machine learning to solve a well-identified problem.
 
