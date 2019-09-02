@@ -2,6 +2,8 @@
 # Date:    02/03/2019
 # Project: ml_utils
 
+try: from ml_utils.imports import *
+except: from imports import *
 
 # Defines the weights corresponding to a given array of labels
 

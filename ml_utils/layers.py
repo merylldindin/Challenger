@@ -2,6 +2,11 @@
 # Date:    15/03/2019
 # Project: ml_utils
 
+try: from ml_utils.utils import *
+except: from utils import *
+
+# Callback designed to work in synergy with the Adaptive Dropout layer
+
 class DecreaseDropout(Callback):
 
     def __init__(self, prb, steps):
@@ -15,6 +20,8 @@ class DecreaseDropout(Callback):
     def on_epoch_end(self, epoch, logs=None):
 
         self.prb = max(0, 1 - epoch/self.steps) * self.ini
+
+# Defines the Adaptive Dropout layer based on callback feedback
 
 class AdaptiveDropout(Layer):
 
@@ -42,6 +49,8 @@ class AdaptiveDropout(Layer):
         base_config = super(AdaptiveDropout, self).get_config()
 
         return dict(list(base_config.items()) + list(config.items()))
+
+# Built Attention layer, to be used in certain relevant circumstances
 
 class Attention(Layer):
     
