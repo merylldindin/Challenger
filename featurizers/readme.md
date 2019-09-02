@@ -13,7 +13,7 @@ sig = np.random.uniform(0, 1, 1250)
 fea = Featurize_1D(sig, sampling_frequency=125).getFeatures()
 ```
 
-Currently, there are **750 features** outputed by the exhaustive featurization. You can check out the (TDA toolbox)[https://github.com/Coricos/TdaToolbox] if you want to add more exotic features. Among the possible computations, here is the list of functions associated with the Featurize_1D object. This dictionnary configuration is translated to computation via the object directly for easier modularity. 
+Currently, there are **750 features** outputed by the exhaustive featurization. You can check out the [TDA toolbox](https://github.com/Coricos/TdaToolbox) if you want to add more exotic features. Among the possible computations, here is the list of functions associated with the Featurize_1D object. This dictionnary configuration is translated to computation via the object directly for easier modularity. 
 
 ```bash
 {
