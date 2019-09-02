@@ -1,0 +1,3 @@
+# Challenger - ML Utils
+
+This submodule is very specific to deep learning fast prototyping, and will greatly evolve over time as I'll be adding experiences from very different background. The first release just consists of two layers and one callback I usually use, and could potentially be of interest for some of you. (_Keras backend implementation_ - Faster prototyping than Tensorflow or PyTorch, but wouldn't advise for production settings)
