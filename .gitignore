@@ -3,6 +3,12 @@
 # Project: optimizers
 
 # Compiled files
-build/
-challenger.egg-info/
+bin/
+lib/
+etc/
 dist/
+share/
+build/
+xgboost/
+include/
+challenger.egg-info/
