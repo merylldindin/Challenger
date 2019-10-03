@@ -6,9 +6,6 @@
 bin/
 lib/
 etc/
-dist/
 share/
-build/
 xgboost/
 include/
-challenger.egg-info/
