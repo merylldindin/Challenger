@@ -14,3 +14,5 @@ from scipy.stats import kurtosis
 from collections import Counter
 from statsmodels.tsa.ar_model import AR
 from statsmodels.tsa.seasonal import seasonal_decompose
+from python_speech_features import mfcc
+from python_speech_features import logfbank

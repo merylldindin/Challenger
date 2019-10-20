@@ -25,3 +25,5 @@ statsmodels>=0.10.1
 usercustomize>=1.0.0
 wincertstore>=0.2
 xgboost>=0.90
+python-speech-features>=0.6
+PyWavelets>=1.1.1

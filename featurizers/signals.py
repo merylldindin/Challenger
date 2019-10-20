@@ -24,12 +24,15 @@ class Featurize_1D:
 
         self.config = {
 
-            'computeFFT': True,
+            'computeSpectralCentroid': True,
+            'computeMFCC': True,
+            'computeLogFBank': True,
             'computePeriodogram': True,
             'computeSpectrogram': True,
             'frequencyBands': True,
             'coefficientsAR': True,
             'crossingOver': True,
+            'signalToNoise': True,
             'computeWavelet': True,
             'computePolarity': True,
             'computeChaos': True,
@@ -44,14 +47,35 @@ class Featurize_1D:
 
         self.config.update(config)
 
-    def computeFFT(self):
+    def computeSpectralCentroid(self):
 
         fft = np.abs(np.fft.rfft(self.signal))
+        frq = np.abs(np.fft.fftfreq(len(self.signal), self.period)[:len(self.signal)//2+1])
         # Add to featurization
-        self.feature += list(fft)
-        self.columns += ['FFT_{}'.format(i) for i in range(len(fft))]
+        self.feature.append(np.sum(fft*frq) / np.sum(fft))
+        self.columns.append('SPECTRAL_CENTROID')
         # Memory efficiency
-        del fft
+        del fft, frq
+
+    def computeMFCC(self, winsize=2.0, winstep=1.0):
+
+        # Compute the Mel features
+        fea = mfcc(self.signal, self.frequency, winlen=winsize, winstep=winstep)
+        # Add to featurization
+        self.feature += list(np.mean(fea, axis=1))
+        self.columns += ['MFCC_{}'.format(i) for i in range(fea.shape[0])]
+        # Memory efficiency
+        del fea
+
+    def computeLogFBank(self, winsize=2.0, winstep=1.0):
+
+        # Compute the Mel features
+        fea = logfbank(self.signal, self.frequency, winlen=winsize, winstep=winstep)
+        # Add to featurization
+        self.feature += list(np.mean(fea, axis=1))
+        self.columns += ['LOGFBANK_{}'.format(i) for i in range(fea.shape[0])]
+        # Memory efficiency
+        del fea
 
     def computePeriodogram(self):
 
@@ -72,9 +96,11 @@ class Featurize_1D:
         # Memory efficiency
         del f, s
 
-    def computeSpectrogram(self):
+    def computeSpectrogram(self, winsize=2.0, winstep=1.0, kappa=0.85):
 
-        f,_,s = sg.spectrogram(self.signal, fs=self.frequency, return_onesided=True)
+        # Define spectrogram parameters
+        arg = {'nperseg': int(winsize*self.frequency), 'noverlap': int(winstep*self.frequency)}
+        f,_,s = sg.spectrogram(self.signal, fs=self.frequency, return_onesided=True, **arg)
         # Add to featurization
         frq = f[s.argmax(axis=0)]
         self.feature += list(frq)
@@ -90,8 +116,38 @@ class Featurize_1D:
         self.columns.append('STD_POWER_SPECTRUM')
         self.feature.append(entropy(psd))
         self.columns.append('ENTROPY_SPECTROGRAM')
+        # Compute spectrum flatness
+        nrm = s.mean(axis=0)
+        nrm[nrm == 0] = 1
+        spc = np.log(s + 1e-20)
+        vpf = np.exp(spc.mean(axis=0)) / nrm
+        # Add to featurization
+        self.feature += list(vpf)
+        self.columns += ['SPECTRAL_FLATNESS_{}'.format(i) for i in range(len(vpf))]
+        # Compute flux
+        spc = np.c_[s[:, 0], s]
+        afx = np.diff(spc, 1, axis=1)
+        vsf = np.sqrt((afx**2).sum(axis=0)) / spc.shape[0]
+        # Add to featurization
+        self.feature += list(vsf[1:])
+        self.columns += ['SPECTRAL_FLUX_{}'.format(i) for i in range(len(vsf)-1)]
+        self.feature.append(np.mean(vsf[1:]))
+        self.columns.append('MEAN_SPECTRAL_FLUX')
+        self.feature.append(np.std(vsf[1:]))
+        self.columns.append('STD_SPECTRAL_FLUX')
+        # Compute roll off
+        spc = np.cumsum(s, axis=0) / s.sum(axis=0, keepdims=True)
+        vsr = np.argmax(spc >= kappa, axis=0)
+        vsr = vsr / (spc.shape[0] - 1) * self.frequency / 2
+        # Add to featurization
+        self.feature += list(vsr)
+        self.columns += ['SPECTRAL_ROLLOFF_{}'.format(i) for i in range(len(vsr))]
+        self.feature.append(np.mean(vsr))
+        self.columns.append('MEAN_SPECTRAL_ROLLOFF')
+        self.feature.append(np.std(vsr))
+        self.columns.append('STD_SPECTRAL_ROLLOFF')
         # Memory efficiency
-        del f, s, frq, psd
+        del f, s, frq, psd, afx, vsf, spc, vsr, nrm , vpf
 
     def frequencyBands(self, bands=[(0.5, 3), (3.5, 7.5), (7.5, 13), (14, 50)]):
 
@@ -103,8 +159,6 @@ class Featurize_1D:
             self.columns.append('SUM_SPECTRUM_BAND_{}'.format(i))
             self.feature.append(np.mean(s[msk]))
             self.columns.append('MEAN_SPECTRUM_BAND_{}'.format(i))
-            self.feature.append(np.std(s[msk]))
-            self.columns.append('STD_SPECTRUM_BAND_{}'.format(i))
         # Memory efficiency
         del f, s, msk
 
@@ -128,6 +182,17 @@ class Featurize_1D:
         self.columns.append(['CROSSING_OVERS'])
         # Memory efficieny
         del sgn
+
+    def signalToNoise(self, axis=0, ddof=0):
+
+        vec = np.asanyarray(self.signal) 
+        mea = vec.mean(axis) 
+        std = vec.std(axis=axis, ddof=ddof)
+        # Add to featurization
+        self.feature.append(np.where(std == 0, 0, mea / std))
+        self.columns.append('SIGNALTONOISE_RATIO')
+        # Memory efficiency
+        del vec, mea, std
 
     def computeWavelet(self, waveform='db4', level=5):
 
