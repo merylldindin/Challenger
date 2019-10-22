@@ -107,18 +107,13 @@ class Prototype:
 
         if self.weights:
 
-            res = np.zeros(len(vector))
-            
             if self.objective == 'regression':
                 tmp = np.digitize(vector, np.linspace(min(vector), 0.9*max(vector), num=10))
                 tmp = LabelEncoder().fit_transform(tmp)
             if self.objective == 'classification':
                 tmp = LabelEncoder().fit_transform(vector)
 
-            wei = compute_class_weight('balanced', np.unique(vector), vector)
-            wei = wei / sum(wei)
-            for ele in np.unique(tmp): res[np.where(tmp == ele)[0]] = wei[int(ele)]
-            return res
+            return compute_sample_weight('balanced', tmp)
 
         else:
             return np.ones(len(vector))
@@ -268,3 +263,4 @@ class Prototype:
         if not filename is None: joblib.dump(model, filename)
 
         return model
+

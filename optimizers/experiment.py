@@ -19,46 +19,55 @@ class Experiment:
         self.log = Logger('/'.join([self.dir, 'logs.log']))
         self.rnd = random_state
 
-    def single(self, problem, method='bayesian'):
+    def run(self, problem, optimization='bayesian', index=None, model_file=None):
 
         self.log.info('Launch training for {} model'.format(problem.model_id))
-        self.log.info('Use {} concurrent threads\n'.format(problem.threads))
+        self.log.info('Use {} concurrent threads'.format(problem.threads))
+        self.log.info('Train on {} samples'.format(problem.x_t.shape[0]))
+        self.log.info('Valid on {} samples\n'.format(problem.x_v.shape[0]))
 
-        if method == 'bayesian':
+        if optimization == 'bayesian':
             # Launch the Bayesian optimization
             opt = Bayesian(problem, problem.loadBoundaries(), self.log, seed=self.rnd)
             opt.run(n_init=self.BAYESIAN_INIT, n_iter=self.BAYESIAN_OPTI)
 
-        if method == 'parzen':
+        if optimization == 'parzen':
             # Launch the Parzen optimization
             opt = Parzen(problem, problem.loadBoundaries(), self.log, seed=self.rnd)
             opt.run(n_iter=self.PARZEN_NITERS)
 
         # Serialize the configuration file
         cfg = {'strategy': 'single', 'model': problem.model_id, 'id': self._id}
-        cfg.update({'objective': problem.objective, 'optimization': method})
+        cfg.update({'objective': problem.objective, 'optimization': optimization})
         cfg.update({'random_state': self.rnd, 'threads': problem.threads})
-        if method == 'bayesian': 
+        if optimization == 'bayesian': 
             cfg.update({'trial_init': self.BAYESIAN_INIT, 'trial_opti': self.BAYESIAN_OPTI})
-        if method == 'parzen': 
+        if optimization == 'parzen': 
             cfg.update({'trial_iter': self.PARZEN_NITERS})
         cfg.update({'best_score': problem.bestScore(), 'validation_metric': problem.metric})
-        nme = '/'.join([self.dir, 'config.json'])
+        if index is None: nme = '/'.join([self.dir, 'config.json'])
+        else: nme = '/'.join([self.dir, 'config_{}.json'.format(index)])
         with open(nme, 'w') as raw: json.dump(cfg, raw, indent=4, sort_keys=True)
 
         # Serialize parameters
         prm = problem.bestParameters()
-        nme = '/'.join([self.dir, 'params.json'])
+        if index is None: nme = '/'.join([self.dir, 'params.json'])
+        else: nme = '/'.join([self.dir, 'params_{}.json'.format(index)])
         with open(nme, 'w') as raw: json.dump(prm, raw, indent=4, sort_keys=True)
 
-    def saveModel(self, problem):
+        # Serialize model if required
+        if not model_file is None:
+            mod = problem.bestModel(filename=model_file, random_seed=self.rnd)
 
-        # Fit and save the best model
-        _ = problem.bestModel(filename='/'.join([self.dir, 'model.jb']), random_seed=self.rnd)
+    def getModel(self, model_file):
 
-    def getModel(self):
+        return joblib.load(model_file)
 
-        return joblib.load('/'.join([self.dir, 'model.jb']))
+    def getProbabilities(self, arrays, model_file):
+
+        mod = self.getModel(model_file)
+        # Get probabilities on given set
+        return tuple([mod.predict_proba(arr) for arr in arrays])
 
     def evaluateModel(self, problem, axes=None):
 
@@ -195,12 +204,61 @@ class Experiment:
         plt.tight_layout()
         plt.show()
 
-    def submitPredictions(self, test_set):
+class WrapperCV:
 
-        # Retrieve the best model
-        model = self.getModel()
+    def __init__(self, x_t, x_v, y_t, y_v, name=str(int(time.time())), folds=3, random_state=42):
 
-        y_p = model.predict(test_set)
-        y_p = pd.DataFrame(np.vstack((np.arange(len(test_set)), y_p)).T, columns=['id', 'label'])
-        y_p = y_p.set_index('id')
-        y_p.to_csv('/'.join([self.dir, 'predictions.csv']))
+        self.x_t = x_t
+        self.x_v = x_v
+        self.y_t = y_t
+        self.y_v = y_v
+
+        self.nme = name
+        self.dir = 'experiments/{}'.format(self.nme)
+        if not os.path.exists(self.dir): os.makedirs(self.dir, exist_ok=True)
+        self.fls = folds
+        self.rnd = random_state
+
+    def run(self, model, objective, metric, threads=1, weights=False, optimization='bayesian', config=None):
+
+        skf = StratifiedKFold(n_splits=self.fls, random_state=self.rnd, shuffle=True)
+        # Prepare the predictions for stacking
+        n_c = len(np.unique(self.y_t))
+        p_t = np.full((self.x_t.shape[0], n_c), np.nan)
+        p_v = np.full((self.x_v.shape[0], self.fls*n_c), np.nan)
+
+        # Run the stratified cross-validation
+        for idx, (i_t, i_v) in enumerate(skf.split(self.y_t, self.y_t)):
+
+            # Build a prototype
+            arg = {'threads': threads, 'weights': weights}
+            vec = (self.x_t[i_t], self.x_t[i_v], self.y_t[i_t], self.y_t[i_v])
+            prb = Prototype(*vec, model, objective, metric, **arg)
+            # Build an experiment
+            exp = Experiment(name=self.nme, random_state=self.rnd)
+            # Override configuration if given
+            if not config is None:
+                for k, v in config.items(): setattr(exp, k.upper(), v)
+            # Define a model prefix
+            fle = '/'.join([exp.dir, '{}_{}.jb'.format(model, idx)])
+            # Run the experiment
+            exp.run(prb, optimization=optimization, index=idx, model_file=fle)
+            exp.log.terminate()
+            # Stack the probabilities
+            prd = exp.getProbabilities([prb.x_v, self.x_v], fle)
+            p_t[i_v,:] = prd[0]
+            p_v[:,n_c*idx:n_c*(idx+1)] = prd[1]
+            # Memory efficiency
+            del arg, vec, prb, exp, fle, prd
+
+        # Serialize resulting arrays
+        np.save('/'.join([self.dir, 'proba_train.npy']), p_t)
+        np.save('/'.join([self.dir, 'proba_valid.npy']), p_v)
+
+if __name__ == '__main__':
+
+    x,y = load_iris(return_X_y=True)
+    x_t, x_v, y_t, y_v = train_test_split(x, y, test_size=0.2, shuffle=True)
+    prb = WrapperCV(x_t, x_v, y_t, y_v)
+    cfg = {'BAYESIAN_INIT': 3, 'BAYESIAN_OPTI': 0}
+    prb.run('ETS', 'classification', 'acc', threads=6, weights=False, config=cfg)
