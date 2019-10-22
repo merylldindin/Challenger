@@ -206,12 +206,11 @@ class Experiment:
 
 class WrapperCV:
 
-    def __init__(self, x_t, x_v, y_t, y_v, name=str(int(time.time())), folds=3, random_state=42):
+    def __init__(self, x_t, x_v, y_t, name=str(int(time.time())), folds=3, random_state=42):
 
         self.x_t = x_t
         self.x_v = x_v
         self.y_t = y_t
-        self.y_v = y_v
 
         self.nme = name
         self.dir = 'experiments/{}'.format(self.nme)
@@ -219,7 +218,7 @@ class WrapperCV:
         self.fls = folds
         self.rnd = random_state
 
-    def run(self, model, objective, metric, threads=1, weights=False, optimization='bayesian', config=None):
+    def run(self, model, objective, metric, scaler, threads=1, weights=False, optimization='bayesian', config=None):
 
         skf = StratifiedKFold(n_splits=self.fls, random_state=self.rnd, shuffle=True)
         # Prepare the predictions for stacking
@@ -230,9 +229,12 @@ class WrapperCV:
         # Run the stratified cross-validation
         for idx, (i_t, i_v) in enumerate(skf.split(self.y_t, self.y_t)):
 
+            # Apply selective scaling
+            x_t = scaler.fit_transform(self.x_t[i_t])
+            x_v = scaler.transform(self.x_t[i_v])
+            vec = (x_t, x_v, self.y_t[i_t], self.y_t[i_v])
             # Build a prototype
             arg = {'threads': threads, 'weights': weights}
-            vec = (self.x_t[i_t], self.x_t[i_v], self.y_t[i_t], self.y_t[i_v])
             prb = Prototype(*vec, model, objective, metric, **arg)
             # Build an experiment
             exp = Experiment(name=self.nme, random_state=self.rnd)
@@ -245,7 +247,7 @@ class WrapperCV:
             exp.run(prb, optimization=optimization, index=idx, model_file=fle)
             exp.log.terminate()
             # Stack the probabilities
-            prd = exp.getProbabilities([prb.x_v, self.x_v], fle)
+            prd = exp.getProbabilities([prb.x_v, scaler.transform(self.x_v)], fle)
             p_t[i_v,:] = prd[0]
             p_v[:,n_c*idx:n_c*(idx+1)] = prd[1]
             # Memory efficiency
@@ -261,4 +263,5 @@ if __name__ == '__main__':
     x_t, x_v, y_t, y_v = train_test_split(x, y, test_size=0.2, shuffle=True)
     prb = WrapperCV(x_t, x_v, y_t, y_v)
     cfg = {'BAYESIAN_INIT': 3, 'BAYESIAN_OPTI': 0}
-    prb.run('ETS', 'classification', 'acc', threads=6, weights=False, config=cfg)
+    pip = Pipeline([('mms', MinMaxScaler()), ('sts', StandardScaler())])
+    prb.run('ETS', 'classification', 'acc', pip, threads=6, weights=False, config=cfg)

@@ -14,6 +14,9 @@ import numpy as np
 import pandas as pd
 
 # Testing
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
