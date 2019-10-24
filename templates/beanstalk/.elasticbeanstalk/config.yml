@@ -1,27 +1,27 @@
 branch-defaults:
   default:
-    environment: aster-STREAM
+    environment: flask-app
   master:
-    environment: aster-STREAM
+    environment: flask-app
 environment-defaults:
-  aster-STREAM:
+  flask-app:
     branch: null
     repository: null
 global:
-  application_name: aster
+  application_name: my-app
   branch: null
-  default_ec2_keyname: aster
+  default_ec2_keyname: my-app
   default_platform: arn:aws:elasticbeanstalk:us-east-2::platform/Python 3.6 running
     on 64bit Amazon Linux/2.9.2
-  default_region: us-east-2
+  default_region: region
   include_git_submodules: true
   instance_profile: null
   platform_name: null
   platform_version: null
-  profile: thrive
+  profile: my-profile
   repository: null
   sc: null
   workspace_type: Application
 tbranch-defaults:
   default:
-    environment: aster-STREAM
+    environment: flask-app
