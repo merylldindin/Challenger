@@ -1,11 +1,36 @@
 ![LOGO](./assets/challenger-logo.png)
 
-Hackathons, it all began with hackathons. Their intrinsic functioning is simple: design a new product in a limited amount of time and convince a jury that this product is worth being used by people. The difference I make here is generally game-changing, as a good product without a good story will not affect any audience, and similarly, a good story without a good product is a sloppy path very dependent on the technical skills of the jury. Making compromises to get a good version of both (no need for perfection) will generally lead you to a podium. Having done dozens of those, task redundancy struck me, especially when the product is about leveraging machine learning to solve a well-identified problem.
+`Author: Meryll Dindin`
 
-As I personally hate losing time doing the same things all over again, I designed this python package as my task reliever for any of my small projects. You will notice that it is merely focused on data science tasks for now, as this is what I have been mainly doing for the past years. It helps me for data preprocessing, machine learning model fitting in a controlled and reproducible environment (which generally takes time that you do not have), graphs utilization and visualization, APIs calls, general data visualization, Flask web server templates and PowerPoint presentation to make sure the story-telling is covering everything it should.
+This package fosters a lot of reusable components that you can easily plug into any of your project. A lot is being developed currently, as I add more and more automation and documentation. Feel free to participate in the elaboration of this open-source package!
 
-Through my multiple experiences, I have noticed that parts of those projects can be automated, and releasing this open-source package is my attempt to give everyone this toolbox to play with.
+Read about the project on [Medium](https://towardsdatascience.com/challenger-a-fast-prototyping-project-f3d97265529c)
 
-## General Project Architecture and Roadmap
+## Set up a whole new environment:
+
+```bash
+git clone https://github.com/Coricos/Challenger.git
+virtualenv -p python3 Challenger
+cd Challenger
+source bin/activate
+pip install -r requirements.txt
+```
+
+## For Jupyter lovers, add the environment to your list of kernels:
+
+```bash
+pip install jupyter notebook ipython ipykernel
+python -m ipykernel install --user --name=challenger
+```
+
+## General project architecture:
 
 ![ROADMAP](./assets/roadmap.png)
+
+## Project usages so far:
+
+* [Thrive Education](https://thrive-education.co)
+* [Project AsTeR](https://www.project-aster.com)
+* [Project Element](https://www.project-element.com)
+* [Dillygence](https://dillygence.com)
+* [Dreem Data Challenge](https://towardsdatascience.com/my-sweet-dreams-about-automatic-sleep-stage-classification-414128441728)
