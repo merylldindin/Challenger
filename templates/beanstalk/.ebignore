@@ -5,8 +5,13 @@
 # Files due to compilation
 __pycache__/
 
+# Not needed?
+.ebextensions/websocket.config
+
+# Sensitive
+environment.json
+deploy-env.sh
+
 # Irrelevant files
 .gitignore
-contributing.md
-license.txt
 readme.md

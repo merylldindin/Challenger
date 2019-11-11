@@ -1,16 +1,16 @@
 branch-defaults:
   default:
-    environment: flask-app
+    environment: {flask-app}
   master:
-    environment: flask-app
+    environment: {flask-app}
 environment-defaults:
-  flask-app:
+  {flask-app}:
     branch: null
     repository: null
 global:
-  application_name: my-app
+  application_name: {my-app}
   branch: null
-  default_ec2_keyname: my-app
+  default_ec2_keyname: {my-ec2-key}
   default_platform: arn:aws:elasticbeanstalk:us-east-2::platform/Python 3.6 running
     on 64bit Amazon Linux/2.9.2
   default_region: region
@@ -18,10 +18,10 @@ global:
   instance_profile: null
   platform_name: null
   platform_version: null
-  profile: my-profile
+  profile: {my-profile}
   repository: null
   sc: null
   workspace_type: Application
 tbranch-defaults:
   default:
-    environment: flask-app
+    environment: {flask-app}
