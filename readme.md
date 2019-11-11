@@ -4,7 +4,7 @@
 
 This package fosters a lot of reusable components that you can easily plug into any of your project. A lot is being developed currently, as I add more and more automation and documentation. Feel free to participate in the elaboration of this open-source package!
 
-Read about the project on [Medium](https://towardsdatascience.com/challenger-a-fast-prototyping-project-f3d97265529c)
+Read about the project on [Medium](https://towardsdatascience.com/challenger-a-fast-prototyping-project-f3d97265529c).
 
 ## Set up a whole new environment:
 
