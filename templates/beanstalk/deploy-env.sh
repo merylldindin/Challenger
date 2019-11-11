@@ -2,7 +2,7 @@
 
 # Author:  DINDIN Meryll
 # Date:    09 November 2019
-# Project: ThriveEducation
+# Project: beanstalk
 
 # Publish environment variable
 
