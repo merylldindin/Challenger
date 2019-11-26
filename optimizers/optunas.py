@@ -40,15 +40,15 @@ class Optunas:
     def evaluateParams(self, trial, iterations):
 
         self.problem.evaluate(self.generateParams(trial))
-        arg = (len(self.problem.score)+1, iterations, self.problem.score[-1])
+        arg = (len(self.problem.score), iterations, self.problem.score[-1])
         self.logger.info('{:3d}/{:3d} > Last Score : {:4f}'.format(*arg))
 
         return -self.problem.score[-1]
 
-    def run(self, n_trials=100):
+    def run(self, n_iter=100):
 
-        if n_trials > 0: self.logger.info('Start optimization')
-        self.study.optimize(partial(self.evaluateParams, iterations=n_trials), n_trials=n_trials)
+        if n_iter > 0: self.logger.info('Start optimization')
+        self.study.optimize(partial(self.evaluateParams, iterations=n_iter), n_trials=n_iter)
         self.logger.info('Best Score : {:4f}'.format(self.problem.bestScore()))
         self.logger.info('End Optimization \n')
 
@@ -62,4 +62,4 @@ if __name__ == '__main__':
 
     bnd = {'x': ('uniform_float', (-3, 3)), 'y': ('uniform_float', (0, 2))}
     opt = Optunas(prb, bnd, Logger('test.log'))
-    opt.run(n_trials=100)
+    opt.run(n_iter=100)

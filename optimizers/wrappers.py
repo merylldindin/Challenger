@@ -26,7 +26,7 @@ class Experiment:
         self.log = Logger('/'.join([self.dir, 'logs.log']))
         self.rnd = random_state
 
-    def run(self, problem, optimization='bayesian', index=None, model_file=None):
+    def run(self, problem, optimization='optunas', index=None, model_file=None):
 
         self.log.info('Launch training for {} model'.format(problem.model_id))
         self.log.info('Use {} concurrent threads'.format(problem.threads))
@@ -43,6 +43,11 @@ class Experiment:
             opt = Parzen(problem, problem.loadBoundaries(), self.log, seed=self.rnd)
             opt.run(n_iter=self.PARZEN_NITERS)
 
+        if optimization == 'optunas':
+            # Launch the Optuna optimization
+            opt = Optunas(problem, problem.loadBoundaries(), self.log, seed=self.rnd)
+            opt.run(n_iter=self.OPTUNA_TRIALS)
+
         # Serialize the configuration file
         cfg = {'strategy': 'single', 'model': problem.model_id, 'id': self._id}
         cfg.update({'objective': problem.objective, 'optimization': optimization})
@@ -51,6 +56,8 @@ class Experiment:
             cfg.update({'trial_init': self.BAYESIAN_INIT, 'trial_opti': self.BAYESIAN_OPTI})
         if optimization == 'parzen': 
             cfg.update({'trial_iter': self.PARZEN_NITERS})
+        if optimization == 'optunas': 
+            cfg.update({'trial_iter': self.OPTUNA_TRIALS})
         cfg.update({'best_score': problem.bestScore(), 'validation_metric': problem.metric})
         if index is None: nme = '/'.join([self.dir, 'config.json'])
         else: nme = '/'.join([self.dir, 'config_{}.json'.format(index)])
@@ -211,6 +218,52 @@ class Experiment:
         plt.tight_layout()
         plt.show()
 
+class Wrapper:
+
+    def __init__(self, x_t, x_v, y_t, name=str(int(time.time())), random_state=42):
+
+        self.x_t = x_t
+        self.x_v = x_v
+        self.y_t = y_t
+
+        self.nme = name
+        self.dir = 'experiments/{}'.format(self.nme)
+        if not os.path.exists(self.dir): os.makedirs(self.dir, exist_ok=True)
+        self.rnd = random_state
+
+    def run(self, model, objective, metric, scaler=None, test_size=0.3, threads=1, weights=False, optimization='optunas', config=None):
+
+        # Apply data splitting
+        arg = {'test_size': test_size, 'random_state': self.rnd}
+        i_t, i_v = train_test_split(np.arange(len(self.y_t)), stratify=self.y_t, **arg)
+        # Apply selective scaling
+        if not scaler is None:
+            x_t = scaler.fit_transform(self.x_t[i_t])
+            x_v = scaler.transform(self.x_t[i_v])
+            vec = (x_t, x_v, self.y_t[i_t], self.y_t[i_v])
+        else:
+            vec = (self.x_t[i_t], self.x_t[i_v], self.y_t[i_t], self.y_t[i_v])
+        # Build a prototype
+        arg = {'threads': threads, 'weights': weights}
+        prb = Prototype(*vec, model, objective, metric, **arg)
+        # Build an experiment
+        exp = Experiment(name=self.nme, random_state=self.rnd)
+        # Override configuration if given
+        if not config is None:
+            for k, v in config.items(): setattr(exp, k.upper(), v)
+        # Define a model prefix
+        fle = '/'.join([exp.dir, '{}_{}.jb'.format(model, 0)])
+        # Run the experiment
+        exp.run(prb, optimization=optimization, index=0, model_file=fle)
+        exp.log.terminate()
+        # Stack the probabilities
+        prd = exp.getProbabilities([scaler.transform(self.x_v)], fle)
+        # Serialize resulting arrays
+        np.save('/'.join([self.dir, 'proba_valid.npy']), prd[0])
+
+        # Memory efficiency
+        del arg, vec, prb, exp, fle, prd
+        
 class WrapperCV:
 
     def __init__(self, x_t, x_v, y_t, name=str(int(time.time())), folds=3, random_state=42):
@@ -225,11 +278,12 @@ class WrapperCV:
         self.fls = folds
         self.rnd = random_state
 
-    def run(self, model, objective, metric, scaler, threads=1, weights=False, optimization='bayesian', config=None):
+    def run(self, model, objective, metric, scaler=None, threads=1, weights=False, optimization='optunas', config=None):
 
         skf = StratifiedKFold(n_splits=self.fls, random_state=self.rnd, shuffle=True)
         # Prepare the predictions for stacking
-        n_c = len(np.unique(self.y_t))
+        if objective == 'regression': n_c = 1
+        if objective == 'classification': n_c = len(np.unique(self.y_t))
         p_t = np.full((self.x_t.shape[0], n_c), np.nan)
         p_v = np.full((self.x_v.shape[0], self.fls*n_c), np.nan)
 
@@ -237,9 +291,12 @@ class WrapperCV:
         for idx, (i_t, i_v) in enumerate(skf.split(self.y_t, self.y_t)):
 
             # Apply selective scaling
-            x_t = scaler.fit_transform(self.x_t[i_t])
-            x_v = scaler.transform(self.x_t[i_v])
-            vec = (x_t, x_v, self.y_t[i_t], self.y_t[i_v])
+            if not scaler is None:
+                x_t = scaler.fit_transform(self.x_t[i_t])
+                x_v = scaler.transform(self.x_t[i_v])
+                vec = (x_t, x_v, self.y_t[i_t], self.y_t[i_v])
+            else:
+                vec = (self.x_t[i_t], self.x_t[i_v], self.y_t[i_t], self.y_t[i_v])
             # Build a prototype
             arg = {'threads': threads, 'weights': weights}
             prb = Prototype(*vec, model, objective, metric, **arg)
@@ -268,7 +325,7 @@ if __name__ == '__main__':
 
     x,y = load_iris(return_X_y=True)
     x_t, x_v, y_t, y_v = train_test_split(x, y, test_size=0.2, shuffle=True)
-    prb = WrapperCV(x_t, x_v, y_t, y_v)
-    cfg = {'BAYESIAN_INIT': 3, 'BAYESIAN_OPTI': 0}
+    prb = Wrapper(x_t, x_v, y_t)
+    cfg = {'OPTUNA_TRIALS': 10}
     pip = Pipeline([('mms', MinMaxScaler()), ('sts', StandardScaler())])
-    prb.run('ETS', 'classification', 'acc', pip, threads=6, weights=False, config=cfg)
+    prb.run('ETS', 'classification', 'acc', pip, threads=7, weights=False, config=cfg)
