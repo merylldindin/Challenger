@@ -263,4 +263,3 @@ class Prototype:
         if not filename is None: joblib.dump(model, filename)
 
         return model
-

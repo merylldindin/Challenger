@@ -40,7 +40,7 @@ class Parzen:
             return {'loss': -score, 'status': STATUS_OK}
 
         trials = Trials()
-        arg = {'algo': tpe.suggest, 'max_evals': n_iter}
+        arg = {'algo': tpe.suggest, 'max_evals': n_iter, 'show_progressbar': False}
         params = fmin(objective, self.space, trials=trials, **arg)
         self.logger.info('Best Score : {:4f}'.format(self.problem.bestScore()))
         self.logger.info('End Parameter Search \n')
