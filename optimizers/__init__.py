@@ -6,4 +6,4 @@ from .problem import Problem, Prototype, Logger
 from .parzen import Parzen
 from .bayesian import Bayesian
 from .optunas import Optunas
-from .experiment import Experiment, Wrapper, WrapperCV
+from .wrappers import Experiment, Wrapper, WrapperCV
