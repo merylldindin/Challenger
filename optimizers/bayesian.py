@@ -149,12 +149,11 @@ class Bayesian:
 if __name__ == '__main__':
 
     def black_box_function(x, y):
-        return - x ** 2 - (y - 1) ** 2 + 1
+        
+        return -x ** 2 - (y - 1) ** 2 + 1
 
     prb = Problem(black_box_function)
 
-    bnd = {'x': ('uniform_float', (-3, 3)), 
-           'y': ('uniform_float', (0, 2))}
-
+    bnd = {'x': ('uniform_float', (-3, 3)), 'y': ('uniform_float', (0, 2))}
     opt = Bayesian(prb, bnd, Logger('test.log'))
-    opt.run(n_init=50, n_iter=10)
+    opt.run(n_init=80, n_iter=20)

@@ -7,11 +7,12 @@ import os
 import six
 import time
 import json
+import joblib
 import logging
 import warnings
-import joblib
 import numpy as np
 import pandas as pd
+from functools import partial
 
 # Testing
 from sklearn.pipeline import Pipeline
@@ -66,6 +67,10 @@ from sklearn.gaussian_process import GaussianProcessRegressor as GPR
 # Hyperband Optimization
 from hyperopt import hp
 from hyperopt.pyll.stochastic import sample
+
+# Optuna Optimization
+import optuna
+from optuna.samplers import TPESampler
 
 # Hyperopt Optimization
 from hyperopt import fmin
