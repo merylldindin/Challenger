@@ -83,10 +83,10 @@ class Experiment:
         # Get probabilities on given set
         return tuple([mod.predict_proba(arr) for arr in arrays])
 
-    def evaluateModel(self, problem, axes=None):
+    def evaluateModel(self, problem, model_file, axes=None):
 
         # Retrieve the model
-        model = self.getModel()
+        model = self.getModel(model_file)
 
         # Predict on the validation set
         y_v = problem.y_v
@@ -132,10 +132,10 @@ class Experiment:
                 plt.tight_layout()
                 plt.show()
 
-    def getImportances(self, problem, n_display=30, features=None, ax=None):
+    def getImportances(self, problem, model_file, n_display=30, features=None, ax=None):
 
         # Retrieve the model
-        model = self.getModel()
+        model = self.getModel(model_file)
 
         # Retrieve the feature names
         if features is None: 
@@ -175,7 +175,7 @@ class Experiment:
         ax.spines['bottom'].set_smart_bounds(True)
         plt.show()
 
-    def dashboard(self, problem, n_display=30):
+    def dashboard(self, problem, model_file, n_display=30):
 
         def display_config(jsonpath, n_truncate, ax):
 
@@ -210,10 +210,10 @@ class Experiment:
 
         ax3 = plt.subplot(gds[6:9,0])
         ax4 = plt.subplot(gds[6:9,1:])
-        self.evaluateModel(problem, axes=(ax3,ax4))
+        self.evaluateModel(problem, model_file, axes=(ax3,ax4))
 
         ax5 = plt.subplot(gds[10:,:])
-        self.getImportances(problem, n_display=n_display, ax=ax5)
+        self.getImportances(problem, model_file, n_display=n_display, ax=ax5)
 
         plt.tight_layout()
         plt.show()
@@ -257,7 +257,10 @@ class Wrapper:
         exp.run(prb, optimization=optimization, index=0, model_file=fle)
         exp.log.terminate()
         # Stack the probabilities
-        prd = exp.getProbabilities([scaler.transform(self.x_v)], fle)
+        if not scaler is None:
+            prd = exp.getProbabilities([scaler.transform(self.x_v)], fle)
+        else:
+            prd = exp.getProbabilities([self.x_v], fle)
         # Serialize resulting arrays
         np.save('/'.join([self.dir, 'proba_valid.npy']), prd[0])
 
@@ -311,7 +314,10 @@ class WrapperCV:
             exp.run(prb, optimization=optimization, index=idx, model_file=fle)
             exp.log.terminate()
             # Stack the probabilities
-            prd = exp.getProbabilities([prb.x_v, scaler.transform(self.x_v)], fle)
+            if not scaler is None:
+                prd = exp.getProbabilities([prb.x_v, scaler.transform(self.x_v)], fle)
+            else: 
+                prd = exp.getProbabilities([prb.x_v, self.x_v], fle)
             p_t[i_v,:] = prd[0]
             p_v[:,n_c*idx:n_c*(idx+1)] = prd[1]
             # Memory efficiency
