@@ -18,7 +18,7 @@ SPACE['LGR'] = {
 
 SPACE['SGD'] = {
     
-    'loss': ('choice', ['hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron']),
+    'loss': ('choice', ['log', 'modified_huber']),
 
     'penalty': ('choice', ['none', 'l1', 'l2', 'elasticnet']),
 
