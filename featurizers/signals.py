@@ -13,6 +13,7 @@ class Featurize_1D:
         self.signal = np.asarray(signal)
         self.frequency = sampling_frequency
         self.period = 1 / self.frequency
+        self.duration = len(self.signal) * self.period
         # Signal featurization
         self.feature = []
         self.columns = []
@@ -43,9 +44,12 @@ class Featurize_1D:
 
             }
 
-    def _update(self, config):
+        self.params = {
 
-        self.config.update(config)
+            'winsize': 0.5,
+            'winstep': 0.25
+
+            }
 
     def computeSpectralCentroid(self):
 
@@ -57,20 +61,28 @@ class Featurize_1D:
         # Memory efficiency
         del fft, frq
 
-    def computeMFCC(self, winsize=2.0, winstep=1.0):
+    def computeMFCC(self):
 
+        arg = {
+            'winlen': self.params.get('winsize')*self.duration,
+            'winstep': self.params.get('winstep')*self.duration
+            }
         # Compute the Mel features
-        fea = mfcc(self.signal, self.frequency, winlen=winsize, winstep=winstep)
+        fea = mfcc(self.signal, self.frequency, **arg)
         # Add to featurization
         self.feature += list(np.mean(fea, axis=1))
         self.columns += ['MFCC_{}'.format(i) for i in range(fea.shape[0])]
         # Memory efficiency
         del fea
 
-    def computeLogFBank(self, winsize=2.0, winstep=1.0):
+    def computeLogFBank(self):
 
+        arg = {
+            'winlen': self.params.get('winsize')*self.duration,
+            'winstep': self.params.get('winstep')*self.duration
+            }
         # Compute the Mel features
-        fea = logfbank(self.signal, self.frequency, winlen=winsize, winstep=winstep)
+        fea = logfbank(self.signal, self.frequency, **arg)
         # Add to featurization
         self.feature += list(np.mean(fea, axis=1))
         self.columns += ['LOGFBANK_{}'.format(i) for i in range(fea.shape[0])]
@@ -96,10 +108,13 @@ class Featurize_1D:
         # Memory efficiency
         del f, s
 
-    def computeSpectrogram(self, winsize=2.0, winstep=1.0, kappa=0.85):
+    def computeSpectrogram(self, kappa=0.85):
 
+        arg = {
+            'nperseg': int(self.params.get('winsize')*len(self.signal)),
+            'noverlap': int(self.params.get('winstep')*len(self.signal))
+            }
         # Define spectrogram parameters
-        arg = {'nperseg': int(winsize*self.frequency), 'noverlap': int(winstep*self.frequency)}
         f,_,s = sg.spectrogram(self.signal, fs=self.frequency, return_onesided=True, **arg)
         # Add to featurization
         frq = f[s.argmax(axis=0)]
@@ -131,9 +146,9 @@ class Featurize_1D:
         # Add to featurization
         self.feature += list(vsf[1:])
         self.columns += ['SPECTRAL_FLUX_{}'.format(i) for i in range(len(vsf)-1)]
-        self.feature.append(np.mean(vsf[1:]))
+        self.feature.append(np.nanmean(vsf[1:]))
         self.columns.append('MEAN_SPECTRAL_FLUX')
-        self.feature.append(np.std(vsf[1:]))
+        self.feature.append(np.nanstd(vsf[1:]))
         self.columns.append('STD_SPECTRAL_FLUX')
         # Compute roll off
         spc = np.cumsum(s, axis=0) / s.sum(axis=0, keepdims=True)
@@ -317,18 +332,17 @@ class Featurize_1D:
         # Memory efficiency
         del f, s
 
-    def getFeatures(self, config=None):
+    def getFeatures(self, config=None, params=None):
 
-        if not config is None: self._update(config)
+        if not config is None: self.config.update(config)
+        if not params is None: self.params.update(params)
 
+        warnings.simplefilter('ignore')
         # Determine the functions that have to be launched
         lst = [key for key, value in self.config.items() if value]
         for function in lst: getattr(Featurize_1D, function)(self)
 
-        dtf = pd.DataFrame([self.feature], columns=self.columns)
-        dtf = dtf.astype('float32')
-
-        return dtf
+        return dict(zip([c.lower() for c in self.columns], [float(e) for e in self.feature]))
 
 class Featurize_3D:
 
