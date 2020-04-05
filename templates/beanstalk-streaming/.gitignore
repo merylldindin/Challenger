@@ -1,0 +1,9 @@
+# Author:  Meryll Dindin
+# Date:    05 April 2020
+# Project: Challenger
+
+# Development
+*.pyc
+*.ipynb
+__pycache__
+.ipynb_checkpoints

@@ -1,0 +1,21 @@
+branch-defaults:
+  master:
+    environment: <beanstalk-name>
+    group_suffix: null
+global:
+  application_name: <application-name>
+  branch: null
+  default_ec2_keyname: <ec2-keypair-name>
+  default_platform: docker
+  default_region: <region>
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: <profile>
+  repository: null
+  sc: null
+  workspace_type: Application
+tbranch-defaults:
+  default:
+    environment: <beanstalk-name>

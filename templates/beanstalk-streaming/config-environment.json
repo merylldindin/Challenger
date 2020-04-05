@@ -1,0 +1,4 @@
+{  
+    "FLASK_SECRET_KEY": "b77084b42961486d97cb35f8d9a64c8b",
+    "FLASK_TIMEZONE": "US/Pacific",
+}
