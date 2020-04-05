@@ -8,11 +8,11 @@ from setuptools import find_packages
 # Launch the setup
 
 setup(name='challenger',
-      version='1.0',
-      description='Challenges Routines',
+      version='0.0',
+      description='Hackathon Routines',
       url='http://github.com/Coricos/challenger',
       author='Dindin Meryll',
       author_email='meryll_dindin@berkeley.edu',
-      license='MIT',
+      license='Apache',
       packages=find_packages()
       )

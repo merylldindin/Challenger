@@ -1,4 +1,4 @@
-![LOGO](./assets/challenger-logo.png)
+![LOGO](./assets/logo.png)
 
 `Author: Meryll Dindin`
 
